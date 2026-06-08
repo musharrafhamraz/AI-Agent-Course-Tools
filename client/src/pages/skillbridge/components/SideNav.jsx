@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Home, BookOpen, TrendingUp, Bot, Settings, Shield, HelpCircle } from 'lucide-react';
 
 export default function SideNav({ activePage = 'dashboard' }) {
   const navItems = [
-    { id: 'dashboard', icon: Home, label: 'Dashboard', to: '/dashboard' },
-    { id: 'courses', icon: BookOpen, label: 'Courses', to: '/courses' },
-    { id: 'progress', icon: TrendingUp, label: 'Progress', to: '/progress' },
-    { id: 'mentor', icon: Bot, label: 'Mentor', to: '/mentor' },
-    { id: 'settings', icon: Settings, label: 'Settings', to: '/settings' },
+    { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
+    { id: 'courses', icon: 'menu_book', label: 'Courses', to: '/courses' },
+    { id: 'progress', icon: 'trending_up', label: 'Progress', to: '/progress' },
+    { id: 'mentor', icon: 'smart_toy', label: 'Mentor', to: '/mentor' },
+    { id: 'settings', icon: 'settings', label: 'Settings', to: '/settings' },
   ];
 
   return (
@@ -19,7 +18,6 @@ export default function SideNav({ activePage = 'dashboard' }) {
 
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const isActive = activePage === item.id;
           
           return (
@@ -32,7 +30,7 @@ export default function SideNav({ activePage = 'dashboard' }) {
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           );
@@ -52,14 +50,14 @@ export default function SideNav({ activePage = 'dashboard' }) {
             to="/admin"
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <Shield className="w-5 h-5" />
+            <span className="material-symbols-outlined text-[20px]">shield</span>
             <span className="text-sm">Admin Panel</span>
           </Link>
           <Link
             to="/help"
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <HelpCircle className="w-5 h-5" />
+            <span className="material-symbols-outlined text-[20px]">help</span>
             <span className="text-sm">Help Center</span>
           </Link>
         </div>
