@@ -1,7 +1,9 @@
 import { Bell, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 
-export default function TopNav({ userName = 'Sarah Jenkins', userRole = 'HR Specialist' }) {
+export default function TopNav() {
+  const { user } = useAuth();
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -9,11 +11,14 @@ export default function TopNav({ userName = 'Sarah Jenkins', userRole = 'HR Spec
     day: 'numeric'
   });
 
+  // Extract first name from full_name
+  const firstName = user?.full_name?.split(' ')[0] || 'User';
+
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 md:px-16 py-4 flex justify-between items-center">
       <div className="flex flex-col">
-        {/* <h2 className="text-xl font-bold text-primary">Good morning, {userName.split(' ')[0]} 👋</h2>
-        <p className="text-sm text-gray-600">{currentDate}</p> */}
+        <h2 className="text-xl font-bold text-primary">Good morning, {firstName} 👋</h2>
+        <p className="text-sm text-gray-600">{currentDate}</p>
       </div>
 
       <div className="flex items-center gap-4">
@@ -33,14 +38,12 @@ export default function TopNav({ userName = 'Sarah Jenkins', userRole = 'HR Spec
 
         <Link to="/profile" className="flex items-center gap-3 cursor-pointer group">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-primary">{userName}</p>
-            <p className="text-xs text-gray-600">{userRole}</p>
+            <p className="text-sm font-bold text-primary">{user?.full_name || 'User'}</p>
+            <p className="text-xs text-gray-600">{user?.email || ''}</p>
           </div>
-          <img
-            alt="User avatar"
-            className="w-10 h-10 rounded-full border-2 border-teal-500 p-[2px] bg-white group-hover:scale-105 transition-transform"
-            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
-          />
+          <div className="w-10 h-10 rounded-full border-2 border-teal-500 p-[2px] bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform">
+            {firstName.charAt(0).toUpperCase()}
+          </div>
         </Link>
       </div>
     </header>
