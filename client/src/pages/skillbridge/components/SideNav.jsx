@@ -1,6 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function SideNav({ activePage = 'dashboard' }) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const navItems = [
     { id: 'dashboard', icon: 'home', label: 'Dashboard', to: '/dashboard' },
     { id: 'courses', icon: 'menu_book', label: 'Courses', to: '/courses' },
@@ -60,6 +69,13 @@ export default function SideNav({ activePage = 'dashboard' }) {
             <span className="material-symbols-outlined text-[20px]">help</span>
             <span className="text-sm">Help Center</span>
           </Link>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="text-sm">Logout</span>
+          </button>
         </div>
       </div>
     </aside>
