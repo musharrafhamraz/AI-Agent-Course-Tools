@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 
 // SkillBridge Pages
 import LandingPage from './pages/skillbridge/LandingPage';
@@ -27,42 +28,44 @@ import AdminDashboard from './pages/skillbridge/AdminDashboard';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
 
-        {/* Onboarding Flow */}
-        <Route path="/onboarding-role" element={<OnboardingRole />} />
-        <Route path="/onboarding-tasks" element={<OnboardingTasks />} />
-        <Route path="/onboarding-plan" element={<OnboardingPlan />} />
+          {/* Onboarding Flow */}
+          <Route path="/onboarding-role" element={<OnboardingRole />} />
+          <Route path="/onboarding-tasks" element={<OnboardingTasks />} />
+          <Route path="/onboarding-plan" element={<OnboardingPlan />} />
 
-        {/* Main App Routes */}
-        <Route path="/dashboard" element={<MainDashboard />} />
-        <Route path="/courses" element={<CourseCatalog />} />
-        <Route path="/courses/browse" element={<CourseCatalogBrowse />} />
-        <Route path="/course/:id" element={<CourseModule />} />
-        <Route path="/quiz/:id" element={<QuizPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        
-        {/* Additional Features */}
-        <Route path="/progress" element={<ProgressTracker />} />
-        <Route path="/certificate/:id" element={<Certificate />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/mentor" element={<AIMentorChat />} />
-        <Route path="/mentors" element={<MentorLibrary />} />
-        <Route path="/community" element={<CommunityFeed />} />
-        <Route path="/notifications" element={<NotificationsHub />} />
-        <Route path="/profile" element={<MyProfile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+          {/* Main App Routes */}
+          <Route path="/dashboard" element={<MainDashboard />} />
+          <Route path="/courses" element={<CourseCatalog />} />
+          <Route path="/courses/browse" element={<CourseCatalogBrowse />} />
+          <Route path="/course/:id" element={<CourseModule />} />
+          <Route path="/quiz/:id" element={<QuizPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          
+          {/* Additional Features */}
+          <Route path="/progress" element={<ProgressTracker />} />
+          <Route path="/certificate/:id" element={<Certificate />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/mentor" element={<AIMentorChat />} />
+          <Route path="/mentors" element={<MentorLibrary />} />
+          <Route path="/community" element={<CommunityFeed />} />
+          <Route path="/notifications" element={<NotificationsHub />} />
+          <Route path="/profile" element={<MyProfile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<AdminDashboard />} />
 
-        {/* 404 */}
-        <Route path="*" element={<NotFound404 />} />
-      </Routes>
-    </Router>
+          {/* 404 */}
+          <Route path="*" element={<NotFound404 />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
