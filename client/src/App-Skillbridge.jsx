@@ -8,6 +8,7 @@ import SignupPage from './pages/skillbridge/SignupPage';
 import MainDashboard from './pages/skillbridge/MainDashboard';
 import OnboardingRole from './pages/skillbridge/OnboardingRole';
 import OnboardingTasks from './pages/skillbridge/OnboardingTasks';
+import OnboardingTools from './pages/skillbridge/OnboardingTools';
 import OnboardingPlan from './pages/skillbridge/OnboardingPlan';
 import CourseCatalog from './pages/skillbridge/CourseCatalog';
 import CourseModule from './pages/skillbridge/CourseModule';
@@ -39,6 +40,7 @@ function App() {
           {/* Onboarding Flow */}
           <Route path="/onboarding-role" element={<OnboardingRole />} />
           <Route path="/onboarding-tasks" element={<OnboardingTasks />} />
+          <Route path="/onboarding-tools" element={<OnboardingTools />} />
           <Route path="/onboarding-plan" element={<OnboardingPlan />} />
 
           {/* Main App Routes */}
@@ -46,11 +48,12 @@ function App() {
           <Route path="/courses" element={<CourseCatalog />} />
           <Route path="/courses/browse" element={<CourseCatalogBrowse />} />
           <Route path="/course/:id" element={<CourseModule />} />
-          <Route path="/quiz/:id" element={<QuizPage />} />
+          <Route path="/quiz/lesson/:id" element={<QuizPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           
           {/* Additional Features */}
           <Route path="/progress" element={<ProgressTracker />} />
+          <Route path="/certificate" element={<Certificate />} />
           <Route path="/certificate/:id" element={<Certificate />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/mentor" element={<AIMentorChat />} />
