@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
 // SkillBridge Pages
@@ -17,6 +17,7 @@ import NotFound404 from './pages/skillbridge/NotFound404';
 import QuizPage from './pages/skillbridge/QuizPage';
 import ProgressTracker from './pages/skillbridge/ProgressTracker';
 import Certificate from './pages/skillbridge/Certificate';
+import CertificateVerification from './pages/skillbridge/CertificateVerification';
 import Leaderboard from './pages/skillbridge/Leaderboard';
 import CourseCatalogBrowse from './pages/skillbridge/CourseCatalogBrowse';
 import AIMentorChat from './pages/skillbridge/AIMentorChat';
@@ -55,6 +56,7 @@ function App() {
           <Route path="/progress" element={<ProgressTracker />} />
           <Route path="/certificate" element={<Certificate />} />
           <Route path="/certificate/:id" element={<Certificate />} />
+          <Route path="/certificate/verify/:hash" element={<CertificateVerification />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/mentor" element={<AIMentorChat />} />
           <Route path="/mentors" element={<MentorLibrary />} />

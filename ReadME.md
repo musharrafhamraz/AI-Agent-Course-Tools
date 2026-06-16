@@ -14,147 +14,163 @@ This platform helps employees from both private companies and government departm
 ## 🏗️ Technology Stack
 
 ### Backend
-- **Runtime**: Node.js with Express.js
-- **Database**: PostgreSQL
+- **Framework**: FastAPI (Python 3.9+)
+- **Database**: PostgreSQL with asyncpg
 - **AI Integration**: OpenAI API / Anthropic Claude API
 - **Video Integration**: YouTube Data API v3
-- **Job Queue**: BullMQ with Redis
-- **Authentication**: JWT
-- **PDF Generation**: PDFKit
+- **Authentication**: JWT (python-jose)
+- **Password Hashing**: bcrypt (passlib)
+- **API Documentation**: Auto-generated Swagger UI & ReDoc
 
 ### Frontend
 - **Framework**: React.js with Vite
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS + Material Design 3
 - **Routing**: React Router
 - **HTTP Client**: Axios
-- **Icons**: Lucide React
+- **Icons**: Material Symbols
 
 ## 📦 Installation
 
 ### Prerequisites
-- Node.js (v18 or higher)
+- Python 3.9 or higher
 - PostgreSQL (v14 or higher)
-- Redis (v6 or higher)
-- OpenAI API key or Anthropic API key
-- YouTube Data API v3 key
+- Node.js (v18 or higher) - for frontend
+- OpenAI API key or Anthropic API key (optional)
+- YouTube Data API v3 key (optional)
 
 ### Setup Steps
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd ai-career-skills-platform
+   cd gov_ai_tools_course
    ```
 
-2. **Install backend dependencies**
+2. **Setup FastAPI Backend**
    ```bash
-   npm install
-   ```
-
-3. **Install frontend dependencies**
-   ```bash
-   cd client
-   npm install
-   cd ..
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
+   cd server_fastapi
    
-   Edit `.env` with your actual configuration:
-   - Database credentials
-   - JWT secret
-   - OpenAI or Anthropic API key
-   - YouTube API key
-   - Redis configuration
+   # Run automated setup (Windows)
+   setup.bat
+   
+   # Or manual setup:
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1  # PowerShell
+   # or .\venv\Scripts\activate  # CMD
+   pip install -r requirements.txt
+   ```
 
-5. **Setup PostgreSQL database**
+3. **Configure Backend Environment**
+   Edit `server_fastapi/.env` with your configuration:
+   ```env
+   DB_HOST=localhost
+   DB_NAME=career_skills_db
+   DB_USER=postgres
+   DB_PASSWORD=your_password
+   JWT_SECRET=your_secret_key
+   ```
+
+4. **Setup PostgreSQL Database**
    ```bash
    # Create database
    createdb career_skills_db
    
-   # Run migrations
+   # Run schema
    psql -U postgres -d career_skills_db -f database-schema.sql
    ```
 
-6. **Start Redis server**
+5. **Install Frontend Dependencies**
    ```bash
-   redis-server
+   cd client
+   npm install
    ```
 
-7. **Run the application**
+6. **Run the Application**
    
-   Development mode (runs both backend and frontend):
    ```bash
+   # Backend (Terminal 1) - from server_fastapi directory
+   cd server_fastapi
+   .\venv\Scripts\Activate.ps1
+   uvicorn app.main:app --reload --port 5000
+   
+   # Or use the run script:
+   run.bat
+   
+   # Frontend (Terminal 2) - from client directory
+   cd client
    npm run dev
    ```
-   
-   Or run separately:
-   ```bash
-   # Backend (Terminal 1)
-   npm run server
-   
-   # Frontend (Terminal 2)
-   npm run client
-   ```
 
-8. **Access the application**
-   - Frontend: http://localhost:3000
+7. **Access the Application**
+   - Frontend: http://localhost:5173
    - Backend API: http://localhost:5000
+   - API Docs: http://localhost:5000/api/docs
+   - ReDoc: http://localhost:5000/api/redoc
 
 ## 🗂️ Project Structure
 
 ```
-ai-career-skills-platform/
-├── server/
-│   ├── config/
-│   │   └── database.js          # Database connection
-│   ├── middleware/
-│   │   └── auth.js              # JWT authentication middleware
-│   ├── routes/
-│   │   ├── auth.js              # Authentication routes
-│   │   ├── onboarding.js        # User onboarding
-│   │   ├── departments.js       # Department management
-│   │   ├── tasks.js             # Task analysis (Phase 2)
-│   │   ├── skills.js            # Skill mapping (Phase 4)
-│   │   ├── courses.js           # Course generation (Phase 5)
-│   │   ├── progress.js          # Progress tracking (Phase 6)
-│   │   ├── chat.js              # AI mentor chat (Phase 6)
-│   │   └── certificates.js      # Certificate generation (Phase 7)
-│   └── index.js                 # Main server file
-├── client/
+gov_ai_tools_course/
+├── server_fastapi/               # FastAPI Backend
+│   ├── app/
+│   │   ├── routers/             # API routes
+│   │   │   ├── auth.py          # Authentication
+│   │   │   ├── onboarding.py    # User onboarding
+│   │   │   ├── departments.py   # Department management
+│   │   │   ├── tasks.py         # Task analysis
+│   │   │   ├── skills.py        # Skill mapping
+│   │   │   ├── courses.py       # Course generation
+│   │   │   ├── progress.py      # Progress tracking
+│   │   │   ├── chat.py          # AI mentor chat
+│   │   │   └── certificates.py  # Certificates
+│   │   ├── schemas/             # Pydantic models
+│   │   │   ├── auth.py
+│   │   │   ├── onboarding.py
+│   │   │   └── department.py
+│   │   ├── utils/               # Utilities
+│   │   │   └── security.py      # JWT & password hashing
+│   │   ├── config.py            # Configuration
+│   │   ├── database.py          # Database connection
+│   │   ├── dependencies.py      # Shared dependencies
+│   │   └── main.py              # FastAPI app
+│   ├── .env                     # Environment variables
+│   ├── requirements.txt         # Python dependencies
+│   ├── setup.bat                # Setup script
+│   ├── run.bat                  # Run script
+│   └── README.md
+├── client/                       # React Frontend
 │   ├── src/
 │   │   ├── context/
-│   │   │   └── AuthContext.jsx  # Authentication context
-│   │   ├── pages/
-│   │   │   ├── Login.jsx        # Login page
-│   │   │   ├── Register.jsx     # Registration page
-│   │   │   ├── Onboarding.jsx   # Onboarding form
-│   │   │   └── Dashboard.jsx    # Main dashboard
-│   │   ├── App.jsx              # App router
-│   │   ├── main.jsx             # Entry point
-│   │   └── index.css            # Global styles
-│   ├── index.html
-│   ├── vite.config.js
-│   ├── tailwind.config.js
+│   │   │   └── AuthContext.jsx  # Auth context
+│   │   ├── pages/skillbridge/   # 24 React pages
+│   │   │   ├── components/
+│   │   │   │   ├── SideNav.jsx
+│   │   │   │   └── TopNav.jsx
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── MainDashboard.jsx
+│   │   │   └── ...22 more pages
+│   │   ├── App-Skillbridge.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   ├── tailwind.config.js       # Material Design 3 colors
 │   └── package.json
-├── database-schema.sql          # Database schema
-├── .env.example                 # Environment variables template
-├── package.json
-├── project-plan.md              # Detailed project plan
+├── database-schema.sql          # PostgreSQL schema
+├── FASTAPI_MIGRATION_GUIDE.md   # Migration guide
 └── README.md
 ```
 
 ## 🚀 Development Phases
 
-### ✅ Phase 1: Foundation & Onboarding (Current)
+### ✅ Phase 1: Foundation & Onboarding (COMPLETED)
 - [x] Project setup and database schema
-- [x] User authentication (register/login)
+- [x] FastAPI backend with asyncpg
+- [x] User authentication (register/login with JWT)
 - [x] Smart onboarding form
 - [x] Pre-loaded government and private departments
-- [x] Basic UI/UX framework
+- [x] React frontend with Material Design 3
+- [x] 24 complete UI pages
+- [x] Auto-generated API documentation
 
 ### 📋 Phase 2: AI Job Analysis Engine
 - [ ] LLM integration for task generation
@@ -226,13 +242,9 @@ ai-career-skills-platform/
 
 ## 🔐 Environment Variables
 
-Required environment variables (see `.env.example`):
+Backend environment variables (in `server_fastapi/.env`):
 
 ```env
-# Server
-PORT=5000
-NODE_ENV=development
-
 # Database
 DB_HOST=localhost
 DB_PORT=5432
@@ -242,24 +254,22 @@ DB_PASSWORD=your_password
 
 # JWT
 JWT_SECRET=your_secret_key
-JWT_EXPIRES_IN=7d
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_MINUTES=10080
 
-# AI Provider (choose one)
+# CORS
+FRONTEND_URL=http://localhost:5173
+
+# App
+APP_NAME=SkillBridge API
+DEBUG=True
+
+# AI Provider (optional)
 OPENAI_API_KEY=your_openai_key
 OPENAI_MODEL=gpt-4-turbo-preview
-# OR
-ANTHROPIC_API_KEY=your_anthropic_key
-ANTHROPIC_MODEL=claude-3-sonnet-20240229
 
-# YouTube
+# YouTube (optional)
 YOUTUBE_API_KEY=your_youtube_key
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# Frontend
-FRONTEND_URL=http://localhost:3000
 ```
 
 ## 📝 API Endpoints
