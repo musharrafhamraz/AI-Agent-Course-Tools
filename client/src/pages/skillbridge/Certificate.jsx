@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Download, Share2, Copy, CheckCircle, Award, Sparkles, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Download, Share2, Copy, CheckCircle, Award, Sparkles, ShieldCheck, ChevronLeft, ChevronRight, Share } from 'lucide-react';
 import axios from 'axios';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // ── confetti ──────────────────────────────────────────────────────────────────
 function launchConfetti() {
@@ -114,6 +116,9 @@ export default function Certificate() {
   const [issuing, setIssuing]     = useState(false);
   const [issueError, setIssueErr] = useState('');
   const confettiFired             = useRef(false);
+  const [downloading, setDownloading] = useState(false);
+  const [instagramModalOpen, setInstagramModalOpen] = useState(false);
+  const certRef = useRef(null);
 
   // ── fetch all certs ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -150,19 +155,108 @@ export default function Certificate() {
   }, [id]);
 
   // ── handlers ─────────────────────────────────────────────────────────────
+  const getVerificationUrl = () => {
+    if (!activeCert) return '';
+    return `${window.location.origin}/certificate/verify/${activeCert.verification_hash}`;
+  };
+
   const handleCopy = () => {
-    if (!activeCert) return;
-    const url = `${window.location.origin}/certificate/verify/${activeCert.verification_hash}`;
+    const url = getVerificationUrl();
+    if (!url) return;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleLinkedIn = () => {
+  const handleLinkedInPost = () => {
+    const url = encodeURIComponent(getVerificationUrl());
+    if (!url) return;
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank');
+  };
+
+  const handleLinkedInAddToProfile = () => {
     if (!activeCert) return;
-    const url = encodeURIComponent(`${window.location.origin}/certificate/verify/${activeCert.verification_hash}`);
-    const title = encodeURIComponent(`I just earned my "${activeCert.course_title}" certificate on SkillBridge! 🎓`);
-    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&summary=${title}`, '_blank');
+    const url = encodeURIComponent(getVerificationUrl());
+    const name = encodeURIComponent(activeCert.course_title);
+    const org = encodeURIComponent("SkillBridge Academy");
+    
+    // Parse issue month and year
+    const dateParts = activeCert.issue_date_display ? activeCert.issue_date_display.split(' ') : [];
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const issueMonth = dateParts[0] ? monthNames.indexOf(dateParts[0].replace(',', '')) + 1 : new Date().getMonth() + 1;
+    const issueYear = dateParts[2] ? parseInt(dateParts[2]) : new Date().getFullYear();
+    
+    window.open(`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${name}&organizationName=${org}&certUrl=${url}&certId=${activeCert.certificate_number}&issueYear=${issueYear}&issueMonth=${issueMonth}`, '_blank');
+  };
+
+  const handleShareFacebook = () => {
+    const url = encodeURIComponent(getVerificationUrl());
+    if (!url) return;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!activeCert) return;
+    const url = getVerificationUrl();
+    const text = encodeURIComponent(`I'm thrilled to share that I just earned my "${activeCert.course_title}" certification on SkillBridge! 🎓 View my verified certificate here: ${url}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
+  const handleShareInstagram = () => {
+    const url = getVerificationUrl();
+    if (!url) return;
+    // Copy the link to clipboard first for convenience
+    navigator.clipboard.writeText(url);
+    setInstagramModalOpen(true);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!activeCert || !certRef.current) return;
+    setDownloading(true);
+    try {
+      const element = certRef.current;
+      
+      const canvas = await html2canvas(element, {
+        scale: 2.5, // Crisp high-res rendering
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const ratio = canvas.width / canvas.height;
+      let width = pdfWidth;
+      let height = pdfWidth / ratio;
+      
+      if (height > pdfHeight) {
+        height = pdfHeight;
+        width = pdfHeight * ratio;
+      }
+      
+      const x = (pdfWidth - width) / 2;
+      const y = (pdfHeight - height) / 2;
+      
+      pdf.addImage(imgData, 'PNG', x, y, width, height);
+      
+      const safeUserName = userName.replace(/[^a-zA-Z0-9]/g, '_');
+      const safeCourseTitle = activeCert.course_title.replace(/[^a-zA-Z0-9]/g, '_');
+      pdf.save(`SkillBridge_Certificate_${safeUserName}_${safeCourseTitle}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleIssueCurrent = async (courseId) => {
@@ -288,45 +382,128 @@ export default function Certificate() {
 
           {/* ── Certificate preview ────────────────────────────────────── */}
           <div className="lg:col-span-8 space-y-5">
-            {activeCert && <CertCard cert={activeCert} userName={userName} />}
-
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-3">
-              <button className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-primary text-white rounded-xl font-semibold hover:opacity-90 transition shadow-md">
-                <Download size={18} />
-                Download PDF
-              </button>
-              <button
-                onClick={handleLinkedIn}
-                className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-secondary text-white rounded-xl font-semibold hover:opacity-90 transition shadow-md"
-              >
-                <Share2 size={18} />
-                Share on LinkedIn
-              </button>
-              <button
-                onClick={handleCopy}
-                title="Copy verification link"
-                className="px-4 py-3.5 border border-outline-variant rounded-xl hover:bg-surface-container transition text-primary"
-              >
-                {copied ? <CheckCircle size={20} className="text-secondary" /> : <Copy size={20} />}
-              </button>
-            </div>
-
-            {copied && (
-              <p className="text-xs text-secondary font-medium text-center animate-fade-in">
-                ✅ Verification link copied to clipboard!
-              </p>
-            )}
-
-            {/* Verification URL display */}
             {activeCert && (
-              <div className="flex items-center gap-2 bg-surface-container-low rounded-xl px-4 py-3 border border-outline-variant">
-                <ShieldCheck size={16} className="text-secondary shrink-0" />
-                <p className="text-xs text-on-surface-variant font-mono truncate">
-                  {window.location.origin}/certificate/verify/{activeCert.verification_hash}
-                </p>
+              <div ref={certRef} className="print-container">
+                <CertCard cert={activeCert} userName={userName} />
               </div>
             )}
+
+            {/* Action buttons / Share Suite */}
+            <div className="bg-white rounded-2xl shadow-sm border border-outline-variant p-6 space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-primary mb-1">Download & Share</h3>
+                <p className="text-xs text-on-surface-variant">Export your official certificate or share it directly to your professional networks.</p>
+              </div>
+
+              {/* Main Actions: Download and Copy Link */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={downloading}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl font-bold hover:opacity-90 disabled:opacity-75 transition shadow-sm text-sm"
+                >
+                  {downloading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={16} />
+                      Download PDF
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleCopy}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 border border-outline-variant rounded-xl font-bold hover:bg-surface-container-low transition text-primary text-sm"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle size={16} className="text-secondary" />
+                      <span className="text-secondary">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} />
+                      Copy Verification Link
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Social Share Grid */}
+              <div className="pt-4 border-t border-outline-variant space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-2">Share to Social Networks</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  
+                  {/* LinkedIn Share Post */}
+                  <button
+                    onClick={handleLinkedInPost}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-outline-variant hover:bg-blue-50/10 hover:border-blue-300 transition text-left text-sm font-semibold text-primary"
+                  >
+                    <svg className="w-5 h-5 text-[#0A66C2] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                    <span>LinkedIn (Share Post)</span>
+                  </button>
+
+                  {/* LinkedIn Add to Profile */}
+                  <button
+                    onClick={handleLinkedInAddToProfile}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-outline-variant hover:bg-emerald-50/10 hover:border-emerald-300 transition text-left text-sm font-semibold text-primary"
+                  >
+                    <svg className="w-5 h-5 text-[#0A66C2] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93zM6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37z" />
+                    </svg>
+                    <span>LinkedIn (Add to Profile)</span>
+                  </button>
+
+                  {/* Facebook Share */}
+                  <button
+                    onClick={handleShareFacebook}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-outline-variant hover:bg-blue-50/10 hover:border-blue-300 transition text-left text-sm font-semibold text-primary"
+                  >
+                    <svg className="w-5 h-5 text-[#1877F2] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    <span>Facebook</span>
+                  </button>
+
+                  {/* WhatsApp Share */}
+                  <button
+                    onClick={handleShareWhatsApp}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-outline-variant hover:bg-emerald-50/10 hover:border-emerald-300 transition text-left text-sm font-semibold text-primary"
+                  >
+                    <svg className="w-5 h-5 text-[#25D366] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.455 5.703 1.456h.008c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    <span>WhatsApp</span>
+                  </button>
+
+                  {/* Instagram Share */}
+                  <button
+                    onClick={handleShareInstagram}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-outline-variant hover:bg-pink-50/10 hover:border-pink-300 transition text-left text-sm font-semibold text-primary"
+                  >
+                    <svg className="w-5 h-5 text-[#E1306C] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845a1.44 1.44 0 100-2.881 1.44 1.44 0 000 2.881z"/>
+                    </svg>
+                    <span>Instagram</span>
+                  </button>
+
+                </div>
+              </div>
+
+              {/* Verification Info */}
+              <div className="flex items-center gap-2 bg-emerald-50/30 text-emerald-800 rounded-xl px-4 py-3 border border-emerald-100">
+                <ShieldCheck size={16} className="text-emerald-600 shrink-0 animate-pulse" />
+                <p className="text-xs font-semibold">
+                  This certificate has a verified status and can be checked publicly on the registry.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* ── Sidebar ────────────────────────────────────────────────── */}
@@ -445,6 +622,67 @@ export default function Certificate() {
           </p>
         </div>
       </footer>
+
+      {/* Instagram Instruction Modal */}
+      {instagramModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant relative space-y-6">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6 text-[#E1306C]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845a1.44 1.44 0 100-2.881 1.44 1.44 0 000 2.881z"/>
+                </svg>
+                <h3 className="text-lg font-bold text-primary">Share on Instagram</h3>
+              </div>
+              <button
+                onClick={() => setInstagramModalOpen(false)}
+                className="text-on-surface-variant hover:text-primary p-1.5 rounded-full hover:bg-surface-container transition flex items-center justify-center"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm text-on-surface-variant leading-relaxed">
+              <p>
+                Instagram does not support direct link sharing. However, you can easily share your verified credential to your Feed or Story:
+              </p>
+              <div className="space-y-3 bg-surface-container-low p-4 rounded-xl border border-outline-variant">
+                <div className="flex gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
+                  <p>Your verification link has been **copied to your clipboard**!</p>
+                </div>
+                <div className="flex gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
+                  <p>Click below to download your certificate PDF.</p>
+                </div>
+                <div className="flex gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</span>
+                  <p>Post the PDF/screenshot on Instagram, and paste the copied link as a **Link Sticker** in your story!</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  handleDownloadPDF();
+                  setInstagramModalOpen(false);
+                }}
+                className="w-full py-3 bg-[#E1306C] text-white rounded-xl font-bold hover:bg-[#c1205c] transition flex items-center justify-center gap-2 text-sm shadow-sm"
+              >
+                <Download size={16} />
+                Download PDF & Continue
+              </button>
+              <button
+                onClick={() => setInstagramModalOpen(false)}
+                className="w-full py-2.5 border border-outline-variant text-primary rounded-xl font-semibold hover:bg-surface-container-low transition text-xs"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
