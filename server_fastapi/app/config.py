@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     YOUTUBE_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
     
+    # Google OAuth
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
