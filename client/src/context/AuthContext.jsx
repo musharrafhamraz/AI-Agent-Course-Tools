@@ -51,19 +51,23 @@ export function AuthProvider({ children }) {
     return response.data
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    delete axios.defaults.headers.common['Authorization']
-    setUser(null)
+  const googleLogin = async (idToken) => {
+    const response = await axios.post('/api/auth/google', { id_token: idToken })
+    const { token, user } = response.data
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    setUser(user)
+    return response.data
   }
+
 
   const value = {
     user,
     loading,
     login,
     register,
-    logout
+    googleLogin,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
